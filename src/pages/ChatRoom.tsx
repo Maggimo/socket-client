@@ -51,7 +51,6 @@ export const ChatRoom = () => {
 
   useEffect(() => {
     socket.on("getUsersCount", ({ data }) => {
-      console.log(data);
       setUserCount(data.usersCount);
     });
     return () => {
