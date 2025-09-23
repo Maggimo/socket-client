@@ -11,7 +11,7 @@ import { io } from "socket.io-client";
 import { Input } from "../../shared/ui";
 import { SelectedRoomContext } from "../../shared/model/selectedRoomContext/selectedRoomContext";
 
-const socket = io("http://localhost:3000");
+const socket = io("https://magchat-back.onrender.com");
 
 export const JoinOrCreateRoom = ({
   joinOrCreate,

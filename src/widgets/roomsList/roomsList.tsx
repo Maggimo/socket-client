@@ -4,7 +4,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { SelectedRoomContext } from "../../shared/model/selectedRoomContext/selectedRoomContext.tsx";
 
-const socket = io("http://localhost:3000");
+const socket = io("https://magchat-back.onrender.com");
 
 export const RoomsList = ({
   joinOrCreate,
