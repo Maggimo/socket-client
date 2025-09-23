@@ -8,45 +8,47 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 
-const socket = io("https://magchat-back.onrender.com");
+// const socket = io("https://magchat-back.onrender.com");
+const socket = io("http://localhost:3000");
 
-type ChatMessage = {
+interface ChatMessage {
   text: string;
   userName: string;
   isMine: boolean;
-};
+}
+
+interface QueryParams {
+  name: string;
+  room: string;
+  password?: string;
+}
 
 export const ChatRoom = () => {
   const { search } = useLocation();
   const navigate = useNavigate();
-  const [params, setParams] = useState<{ [k: string]: string }>();
+  const [params, setParams] = useState<QueryParams>();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [message, setMessage] = useState("");
   const [userCount, setUserCount] = useState<number>(0);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  const myName = params?.name;
-
-  const leftRoom = () => {
-    socket.emit("leave", { params });
-    navigate("/");
-  };
-
-  const inputChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
-    setMessage(event.target.value);
-  };
-
-  const formSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!message.trim()) return;
-    socket.emit("sendMessage", { message, params });
-    setMessage("");
-  };
-
   useEffect(() => {
-    const searchParams = Object.fromEntries(new URLSearchParams(search));
+    const searchParams = Object.fromEntries(
+      new URLSearchParams(search),
+    ) as unknown as QueryParams;
     setParams(searchParams);
-    socket.emit("join", searchParams);
+    socket.emit("join", {
+      userName: searchParams.name,
+      roomName: searchParams.room,
+      password: searchParams.password || "",
+    });
+
+    return () => {
+      socket.emit("leave", {
+        userName: searchParams.name,
+        roomName: searchParams.room,
+      });
+    };
   }, [search]);
 
   useEffect(() => {
@@ -64,19 +66,39 @@ export const ChatRoom = () => {
         ...prev,
         {
           text: data.message,
-          userName: data.user.name,
-          isMine: data.user.name === myName,
+          userName: data.userName,
+          isMine: data.userName === params?.name,
         },
       ]);
     });
     return () => {
       socket.off("message");
     };
-  }, [myName]);
+  }, [params?.name]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  const leftRoom = () => {
+    socket.emit("leave", { params });
+    navigate("/");
+  };
+
+  const inputChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
+    setMessage(event.target.value);
+  };
+
+  const formSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+    socket.emit("sendMessage", {
+      userName: params?.name,
+      roomName: params?.room,
+      message,
+    });
+    setMessage("");
+  };
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-100 to-slate-200">
