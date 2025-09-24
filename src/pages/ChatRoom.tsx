@@ -1,3 +1,5 @@
+import { SmileOutlined } from "@ant-design/icons";
+import EmojiPicker from "emoji-picker-react";
 import {
   type ChangeEvent,
   type FormEvent,
@@ -9,7 +11,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 
 // const socket = io("https://magchat-back.onrender.com");
-const socket = io("https://magchat-back.onrender.com");
+const socket = io("http://127.0.0.1:3000/");
 
 interface ChatMessage {
   text: string;
@@ -30,7 +32,9 @@ export const ChatRoom = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [message, setMessage] = useState("");
   const [userCount, setUserCount] = useState<number>(0);
+  const [emojiVisibility, setEmojiVisibility] = useState<boolean>(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const emojiRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const searchParams = Object.fromEntries(
@@ -79,6 +83,18 @@ export const ChatRoom = () => {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  // Close emoji picker on outside click
+  useEffect(() => {
+    if (!emojiVisibility) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
+        setEmojiVisibility(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [emojiVisibility]);
 
   const leftRoom = () => {
     socket.emit("leave", { params });
@@ -174,6 +190,26 @@ export const ChatRoom = () => {
               autoComplete="off"
               required
             />
+            <div className="relative" ref={emojiRef}>
+              <SmileOutlined
+                onClick={() => setEmojiVisibility(!emojiVisibility)}
+                className="cursor-pointer text-xl"
+              />
+              <div
+                className={`absolute bottom-full right-[-90px] mb-8 z-50 transition-all duration-200 ease-out transform ${
+                  emojiVisibility
+                    ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
+                    : "opacity-0 translate-y-2 scale-95 pointer-events-none"
+                }`}
+                aria-hidden={!emojiVisibility}
+              >
+                <EmojiPicker
+                  onEmojiClick={(emoji) =>
+                    setMessage((prev) => prev + emoji.emoji)
+                  }
+                />
+              </div>
+            </div>
             <button
               type="submit"
               className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"

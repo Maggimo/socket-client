@@ -2,9 +2,9 @@ import { LockOutlined } from "@ant-design/icons";
 import { clsx } from "clsx";
 import React, { useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import { SelectedRoomContext } from "../../shared/model/selectedRoomContext/selectedRoomContext.tsx";
+import { RoomsContext } from "../../shared/model";
 
-const socket = io("https://magchat-back.onrender.com");
+const socket = io("http://127.0.0.1:3000/");
 
 export const RoomsList = ({
   joinOrCreate,
@@ -17,7 +17,7 @@ export const RoomsList = ({
     { roomName: string; password: string; users: { name: string }[] }[]
   >([]);
 
-  const ctx = useContext(SelectedRoomContext);
+  const ctx = useContext(RoomsContext);
   if (!ctx) throw new Error("SelectedRoomContext is not provided");
   const { selectedRoom, setSelectedRoom } = ctx;
 
